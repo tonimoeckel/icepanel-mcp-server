@@ -15,26 +15,25 @@ export function parseCliConfig(args: string[], env: NodeJS.ProcessEnv): CliConfi
 
   for (const arg of args) {
     const match = arg.match(/^([^=]+)=(.*)$/);
-    if (match) {
-      const [, key, value] = match;
-      updatedEnv[key] = stripOuterQuotes(value);
+    if (match && match[1] && match[2] !== undefined) {
+      updatedEnv[match[1]] = stripOuterQuotes(match[2]);
     }
   }
 
-  let transport = updatedEnv.MCP_TRANSPORT || "stdio";
-  let portRaw = updatedEnv.MCP_PORT || "3000";
+  let transport: string = updatedEnv.MCP_TRANSPORT || "stdio";
+  let portRaw: string = updatedEnv.MCP_PORT || "3000";
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === "--transport" && args[i + 1]) {
-      transport = args[i + 1];
+    if (arg === "--transport" && args[i + 1] != null) {
+      transport = args[i + 1]!;
       i++;
       continue;
     }
 
-    if (arg === "--port" && args[i + 1]) {
-      portRaw = args[i + 1];
+    if (arg === "--port" && args[i + 1] != null) {
+      portRaw = args[i + 1]!;
       i++;
     }
   }

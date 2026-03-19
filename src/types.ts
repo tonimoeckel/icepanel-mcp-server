@@ -286,3 +286,81 @@ export interface UpdateDomainRequest {
 export interface DomainResponse {
   domain: Domain;
 }
+
+// ============================================================================
+// Diagram Types
+// ============================================================================
+
+export interface Diagram {
+  id: string;
+  name?: string;
+  description?: string;
+  type?: string;
+  handleId?: string;
+  status?: string;
+  [key: string]: any;
+}
+
+export interface DiagramThumbnail {
+  id?: string;
+  diagramId?: string;
+  url?: string;
+  [key: string]: any;
+}
+
+export interface DiagramsResponse {
+  diagrams: Diagram[];
+}
+
+export interface DiagramResponse {
+  diagram: Diagram;
+  [key: string]: unknown;
+}
+
+export interface DiagramThumbnailsResponse {
+  thumbnails: DiagramThumbnail[];
+}
+
+export interface DiagramThumbnailResponse {
+  thumbnail: DiagramThumbnail;
+  [key: string]: unknown;
+}
+
+// ============================================================================
+// Flow Types
+// ============================================================================
+
+export interface Flow {
+  id: string;
+  name?: string;
+  description?: string;
+  handleId?: string;
+  landscapeId?: string;
+  status?: string;
+  [key: string]: any;
+}
+
+export interface FlowThumbnail {
+  id?: string;
+  flowId?: string;
+  url?: string;
+  [key: string]: any;
+}
+
+export interface FlowsResponse {
+  flows: Flow[];
+}
+
+export interface FlowResponse {
+  flow: Flow;
+  [key: string]: unknown;
+}
+
+export interface FlowThumbnailsResponse {
+  thumbnails: FlowThumbnail[];
+}
+
+export interface FlowThumbnailResponse {
+  thumbnail: FlowThumbnail;
+  [key: string]: unknown;
+}

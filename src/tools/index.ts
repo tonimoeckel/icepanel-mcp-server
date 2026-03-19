@@ -1,6 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerConnectionTools } from "./connections.js";
+import { registerDiagramTools } from "./diagrams.js";
 import { registerDomainTools } from "./domains.js";
+import { registerFlowTools } from "./flows.js";
 import { registerLandscapeTools } from "./landscapes.js";
 import { registerModelObjectTools } from "./model-objects.js";
 import { registerTagTools } from "./tags.js";
@@ -13,4 +15,6 @@ export function registerAllTools(server: McpServer, organizationId: string) {
   registerTechnologyTools(server, organizationId);
   registerTagTools(server);
   registerDomainTools(server);
+  registerDiagramTools(server);
+  registerFlowTools(server);
 }

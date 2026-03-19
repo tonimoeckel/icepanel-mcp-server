@@ -18,6 +18,14 @@ import type {
   CreateDomainRequest,
   UpdateDomainRequest,
   DomainResponse,
+  DiagramsResponse,
+  DiagramResponse,
+  DiagramThumbnailsResponse,
+  DiagramThumbnailResponse,
+  FlowsResponse,
+  FlowResponse,
+  FlowThumbnailsResponse,
+  FlowThumbnailResponse,
 } from "../types.js";
 
 const DEFAULT_API_BASE_URL = "https://api.icepanel.io/v1";
@@ -624,4 +632,188 @@ export async function deleteDomain(
     `/landscapes/${landscapeId}/versions/${versionId}/domains/${domainId}`,
     { method: "DELETE" }
   );
+}
+
+// ============================================================================
+// Text API Request (for flow exports)
+// ============================================================================
+
+async function apiRequestText(path: string, options: RequestInit = {}): Promise<string> {
+  const url = `${API_BASE_URL}${path}`;
+
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    Authorization: `ApiKey ${getApiKey()}`,
+    ...options.headers,
+  };
+
+  const method = (options.method || "GET").toUpperCase();
+  const canRetry = method === "GET" || method === "HEAD";
+
+  for (let attempt = 0; attempt <= API_MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+    const abortListener = () => controller.abort();
+
+    if (options.signal) {
+      if (options.signal.aborted) {
+        controller.abort();
+      } else {
+        options.signal.addEventListener("abort", abortListener, { once: true });
+      }
+    }
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const rawText = await response.text();
+        let body: any;
+        try {
+          body = JSON.parse(rawText);
+        } catch {
+          body = rawText || undefined;
+        }
+
+        const apiError = new IcePanelApiError(response.status, response.statusText, body);
+        if (canRetry && attempt < API_MAX_RETRIES && isRetryableStatus(response.status)) {
+          await sleep(getRetryDelay(attempt));
+          continue;
+        }
+        throw apiError;
+      }
+
+      return await response.text();
+    } catch (error) {
+      if (canRetry && attempt < API_MAX_RETRIES && isRetryableError(error, options.signal?.aborted ?? false)) {
+        await sleep(getRetryDelay(attempt));
+        continue;
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+      if (options.signal) {
+        options.signal.removeEventListener("abort", abortListener);
+      }
+    }
+  }
+
+  throw new Error("Unexpected error in apiRequestText");
+}
+
+// ============================================================================
+// Diagram Read Operations
+// ============================================================================
+
+export async function getDiagrams(
+  landscapeId: string,
+  versionId: string = "latest",
+  options: { filter?: Record<string, unknown> } = {}
+): Promise<DiagramsResponse> {
+  const params = options.filter ? buildFilterParams(options.filter) : new URLSearchParams();
+  const queryString = params.toString();
+  const url = `/landscapes/${landscapeId}/versions/${versionId}/diagrams${queryString ? `?${queryString}` : ""}`;
+  return apiRequest(url) as Promise<DiagramsResponse>;
+}
+
+export async function getDiagram(
+  landscapeId: string,
+  diagramId: string,
+  versionId: string = "latest"
+): Promise<DiagramResponse> {
+  return apiRequest(`/landscapes/${landscapeId}/versions/${versionId}/diagrams/${diagramId}`) as Promise<DiagramResponse>;
+}
+
+export async function getDiagramThumbnails(
+  landscapeId: string,
+  versionId: string = "latest",
+  options: { filter?: Record<string, unknown> } = {}
+): Promise<DiagramThumbnailsResponse> {
+  const params = options.filter ? buildFilterParams(options.filter) : new URLSearchParams();
+  const queryString = params.toString();
+  const url = `/landscapes/${landscapeId}/versions/${versionId}/diagrams/thumbnails${queryString ? `?${queryString}` : ""}`;
+  return apiRequest(url) as Promise<DiagramThumbnailsResponse>;
+}
+
+export async function getDiagramThumbnail(
+  landscapeId: string,
+  diagramId: string,
+  versionId: string = "latest"
+): Promise<DiagramThumbnailResponse> {
+  return apiRequest(
+    `/landscapes/${landscapeId}/versions/${versionId}/diagrams/${diagramId}/thumbnail`
+  ) as Promise<DiagramThumbnailResponse>;
+}
+
+// ============================================================================
+// Flow Read Operations
+// ============================================================================
+
+export async function getFlows(
+  landscapeId: string,
+  versionId: string = "latest",
+  options: { filter?: Record<string, unknown> } = {}
+): Promise<FlowsResponse> {
+  const params = options.filter ? buildFilterParams(options.filter) : new URLSearchParams();
+  const queryString = params.toString();
+  const url = `/landscapes/${landscapeId}/versions/${versionId}/flows${queryString ? `?${queryString}` : ""}`;
+  return apiRequest(url) as Promise<FlowsResponse>;
+}
+
+export async function getFlow(
+  landscapeId: string,
+  flowId: string,
+  versionId: string = "latest"
+): Promise<FlowResponse> {
+  return apiRequest(`/landscapes/${landscapeId}/versions/${versionId}/flows/${flowId}`) as Promise<FlowResponse>;
+}
+
+export async function getFlowThumbnails(
+  landscapeId: string,
+  versionId: string = "latest",
+  options: { filter?: Record<string, unknown> } = {}
+): Promise<FlowThumbnailsResponse> {
+  const params = options.filter ? buildFilterParams(options.filter) : new URLSearchParams();
+  const queryString = params.toString();
+  const url = `/landscapes/${landscapeId}/versions/${versionId}/flows/thumbnails${queryString ? `?${queryString}` : ""}`;
+  return apiRequest(url) as Promise<FlowThumbnailsResponse>;
+}
+
+export async function getFlowThumbnail(
+  landscapeId: string,
+  flowId: string,
+  versionId: string = "latest"
+): Promise<FlowThumbnailResponse> {
+  return apiRequest(
+    `/landscapes/${landscapeId}/versions/${versionId}/flows/${flowId}/thumbnail`
+  ) as Promise<FlowThumbnailResponse>;
+}
+
+export async function getFlowText(
+  landscapeId: string,
+  flowId: string,
+  versionId: string = "latest"
+): Promise<string> {
+  return apiRequestText(`/landscapes/${landscapeId}/versions/${versionId}/flows/${flowId}/export/text`);
+}
+
+export async function getFlowCode(
+  landscapeId: string,
+  flowId: string,
+  versionId: string = "latest"
+): Promise<string> {
+  return apiRequestText(`/landscapes/${landscapeId}/versions/${versionId}/flows/${flowId}/export/code`);
+}
+
+export async function getFlowMermaid(
+  landscapeId: string,
+  flowId: string,
+  versionId: string = "latest"
+): Promise<string> {
+  return apiRequestText(`/landscapes/${landscapeId}/versions/${versionId}/flows/${flowId}/export/mermaid`);
 }

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "@icepanel/icepanel": {
+      "command": "node",
+      "args": [
+        "/Users/tonimoeckel/Development/icepanel-mcp-server-toni/bin/icepanel-mcp-server.js"
+      ],
+      "env": {
+        "API_KEY": "v3ppR7tbIwzha6rnEC0i:d9c1bd7b985d903547ecbcca9a117cd678ea65147c98fcca307a35acf66075aa",
+        "ORGANIZATION_ID": "5r7YAKz27aye2zL3pJTL"
+      }
+    }
+  }
+}
